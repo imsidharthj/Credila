@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+customer_data.xlsx
+loan_data.xlsx
+
 # Distribution / packaging
 .Python
 build/

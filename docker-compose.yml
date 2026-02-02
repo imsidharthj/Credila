@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=django-insecure-test-key-change-in-prod
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,[::1]
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=credit_db
+      - SQL_USER=postgres
+      - SQL_PASSWORD=postgres
+      - SQL_HOST=db
+      - SQL_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    command: celery -A config worker -l info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=django-insecure-test-key-change-in-prod
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=credit_db
+      - SQL_USER=postgres
+      - SQL_PASSWORD=postgres
+      - SQL_HOST=db
+      - SQL_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - web
+      - redis
+      - db
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=credit_db
+    ports:
+      - "5433:5432"
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6380:6379"
+
+volumes:
+  postgres_data:
