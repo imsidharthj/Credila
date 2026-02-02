@@ -44,11 +44,15 @@ def calculate_credit_score(customer_id):
         total_approved_volume = loans.aggregate(Sum('loan_amount'))['loan_amount__sum'] or 0
         
         # Calculation
-        score = 0
-        score += (total_emis_paid_on_time * 0.5)
-        score += (total_loans * 5)
-        score -= (loans_this_year * 10) # Penalty for too much recent activity
-        score += (total_approved_volume / 100000) # 1 point per 100k
+        # If no loan history, give a base score (new customer benefit)
+        if total_loans == 0:
+            score = 50  # New customers start with a neutral score
+        else:
+            score = 0
+            score += (total_emis_paid_on_time * 0.5)
+            score += (total_loans * 5)
+            score -= (loans_this_year * 10) # Penalty for too much recent activity
+            score += (total_approved_volume / 100000) # 1 point per 100k
         
         # Cap at 100
         score = min(score, 100)
